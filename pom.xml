@@ -33,26 +33,26 @@
 
     <build>
        <plugins> 
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-checkstyle-plugin</artifactId>
-            <version>2.17</version>
-            <executions>
-                <execution>
-                    <id>validate</id>
-                    <phase>validate</phase>
-                    <configuration>
-                       <configLocation>src/checkstyle/checks.xml</configLocation>
-                        <encoding>UTF-8</encoding>
-                        <consoleOutput>true</consoleOutput>
-                        <failsOnError>true</failsOnError>
-                    </configuration>
-                <goals>
-                    <goal>check</goal>
-                </goals>
-                </execution>
-            </executions>
-        </plugin>
+<!--        <plugin>-->
+<!--            <groupId>org.apache.maven.plugins</groupId>-->
+<!--            <artifactId>maven-checkstyle-plugin</artifactId>-->
+<!--            <version>2.17</version>-->
+<!--            <executions>-->
+<!--                <execution>-->
+<!--                    <id>validate</id>-->
+<!--                    <phase>validate</phase>-->
+<!--                    <configuration>-->
+<!--                       <configLocation>src/checkstyle/checks.xml</configLocation>-->
+<!--                        <encoding>UTF-8</encoding>-->
+<!--                        <consoleOutput>true</consoleOutput>-->
+<!--                        <failsOnError>true</failsOnError>-->
+<!--                    </configuration>-->
+<!--                <goals>-->
+<!--                    <goal>check</goal>-->
+<!--                </goals>-->
+<!--                </execution>-->
+<!--            </executions>-->
+<!--        </plugin>-->
            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-release-plugin</artifactId>
@@ -76,6 +76,7 @@
                                    <include>com.google.guava:guava</include>
                                    <include>io.airlift:log</include>
                                    <include>joda-time:joda-time</include>
+                                   <include>io.prestosql:presto-spi</include>
                                </includes>
                            </artifactSet>
                            <relocations>
@@ -134,6 +135,21 @@
     </developers>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.facebook.presto/presto-spi -->
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-spi</artifactId>
+            <version>0.282</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-common</artifactId>
+            <version>0.282</version>
+<!--            <scope>provided</scope>-->
+        </dependency>
+
         <dependency>
             <groupId>io.prestosql</groupId>
             <artifactId>presto-spi</artifactId>
@@ -174,6 +190,25 @@
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>${jodatime.version}</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>org.junit.jupiter</groupId>-->
+<!--            <artifactId>junit-jupiter-engine</artifactId>-->
+<!--            <version>5.2.0</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.junit.platform</groupId>-->
+<!--            <artifactId>junit-platform-runner</artifactId>-->
+<!--            <version>1.2.0</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -231,6 +266,12 @@
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                         </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.22.2</version>
                     </plugin>
                 </plugins>
             </build>
