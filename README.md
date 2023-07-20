@@ -14,7 +14,26 @@
   limitations under the License. See accompanying LICENSE file.
 {% endcomment %}
 -->
-# Presto User-Defined Functions(UDFs)
+# Newsbreak internal Presto UDF development process.
+1.Follow the example changes in src/main/java/com/facebook/presto/udfs
+
+2.Write corresponding test in test folder
+
+3.Register your function in src/main/java/com/facebook/presto/udfs/FBUdfPlugin.java
+
+4.Add new change info in release log for later rollback and tracking
+
+5.Commit your changes
+
+6.mvn clean package and cp build udfs-3.0.1-SNAPSHOT.jar to s3://data-emr-pmi/presto-bootstrap/jar/udfs-3.0.1-SNAPSHOT.jar
+
+7.Make another copy in s3 such as udfs-3.0.1-SNAPSHOT.jar.20230720 as backup
+
+8.Use EMR bootstrap command OR goto the Presto master node and run "download_presto_udf.sh" script.
+This script should auto deploy udfs-3.0.1-SNAPSHOT.jar and restart Presto service.
+If failed to restart Presto, it will rollback to the previous state.
+
+# Presto User-Defined Functions(UDFs) (Open source doc for reference)
 Plugin for Presto to allow addition of user defined functions. The plugin simplifies the process of adding user functions to Presto.
 
 ## Plugging in Presto UDFs
