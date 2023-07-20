@@ -21,12 +21,12 @@ public class TestNltkBaseTokenizeFunction {
         String input = "hello so than world I think that's good";
         Slice inputSlice = Slices.utf8Slice(input);
 
-        String[] expected = {"hello", "world", "I", "think", "that's", "good"};
+        String[] expected = {"hello", "world", "think", "that's", "good"};
 
         Block block = NltkBaseTokenize(inputSlice);
         int count = block.getPositionCount();
 
-        assertEquals(6, count);
+        assertEquals(5, count);
         for(int i = 0; i < count; i++) {
             int length = block.getSliceLength(i);
             Slice currentSlice = block.getSlice(i, 0, length);

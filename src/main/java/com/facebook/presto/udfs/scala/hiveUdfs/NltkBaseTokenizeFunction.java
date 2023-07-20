@@ -79,7 +79,7 @@ public final class NltkBaseTokenizeFunction
 
             String candidate = new String(string.getBytes(index, splitIndex - index), StandardCharsets.UTF_8);
 
-            if (!STOP_WORDS_SET.contains(candidate)) {
+            if (!STOP_WORDS_SET.contains(candidate.toLowerCase())) {
                 // Add the part from current index to found split
                 VARCHAR.writeSlice(parts, string, index, splitIndex - index);
             }
