@@ -54,4 +54,36 @@ public class TestNltkBaseTokenizeFunction {
         );
     }
 
+    @Test
+    public void NltkBaseTokenizeTest4() {
+        this.DoTest(
+            "The",
+            new String[] {""}
+        );
+    }
+
+    @Test
+    public void NltkBaseTokenizeTest5() {
+        this.DoTest(
+            "The the .",
+            new String[] {""}
+        );
+    }
+
+    @Test
+    public void NltkBaseTokenizeTest6() {
+        this.DoTest(
+            "aaa",
+            new String[] {"aaa"}
+        );
+    }
+
+    @Test
+    public void NltkBaseTokenizeTest7() {
+        this.DoTest(
+            "",
+            new String[] {""}
+        );
+    }
+
 }
