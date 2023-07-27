@@ -104,6 +104,11 @@ public final class NltkBaseTokenizeFunction
             VARCHAR.writeSlice(parts, string, index, string.length() - index);
         }
 
+        // Since parquet does not support empty arrays
+        if (parts.getPositionCount() == 0) {
+            VARCHAR.writeString(parts, "");
+        }
+
         return parts.build();
     }
 //
