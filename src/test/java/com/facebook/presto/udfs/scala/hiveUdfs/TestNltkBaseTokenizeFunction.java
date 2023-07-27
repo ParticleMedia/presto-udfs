@@ -16,17 +16,12 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestNltkBaseTokenizeFunction {
 
-    @Test
-    public void NltkBaseTokenizeTest() {
-        String input = "hello so than world I think that's good";
+    private void DoTest(String input, String[] expected) {
         Slice inputSlice = Slices.utf8Slice(input);
-
-        String[] expected = {"hello", "world", "think", "that's", "good"};
-
         Block block = NltkBaseTokenize(inputSlice);
         int count = block.getPositionCount();
 
-        assertEquals(5, count);
+        assertEquals(expected.length, count);
         for(int i = 0; i < count; i++) {
             int length = block.getSliceLength(i);
             Slice currentSlice = block.getSlice(i, 0, length);
@@ -34,4 +29,29 @@ public class TestNltkBaseTokenizeFunction {
             assertEquals(expected[i], candidate);
         }
     }
+
+    @Test
+    public void NltkBaseTokenizeTest() {
+        this.DoTest(
+            "5.5 Magnitude Earthquake Strikes Northern California , No Tsunami Threat",
+            new String[] {"5.5","Magnitude","Earthquake","Strikes","Northern","California","Tsunami","Threat"}
+        );
+    }
+
+    @Test
+    public void NltkBaseTokenizeTest2() {
+        this.DoTest(
+            "A ` base camp ' has popped up on vacant land in the Florida Keys . What 's happening there ?",
+            new String[] {"base","camp","popped","vacant","land","Florida","Keys","'s","happening"}
+        );
+    }
+
+    @Test
+    public void NltkBaseTokenizeTest3() {
+        this.DoTest(
+            "Scott County Inmate Roster -- 3-11-23",
+            new String[] {"Scott", "County", "Inmate", "Roster", "--", "3-11-23"}
+        );
+    }
+
 }

@@ -39,7 +39,13 @@ public final class NltkBaseTokenizeFunction
             "needn", "needn't", "shan", "shan't", "shouldn", "shouldn't", "wasn", "wasn't", "weren",
             "weren't", "won", "won't", "wouldn", "wouldn't"};
 
+    private static final String[] STRING_PUNCTUATION = {
+            "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", ":", ";", "<", "=", 
+            ">", "?", "@", "[", "\\", "]", "^", "_", "`", "{", "|", "}", "~"
+    };
+
     private static final Set<String> STOP_WORDS_SET = new HashSet<>(Arrays.asList(STOP_WORDS));
+    private static final Set<String> STRING_PUCNTUATION_SET = new HashSet<>(Arrays.asList(STRING_PUNCTUATION));
 
     public NltkBaseTokenizeFunction() {}
 
@@ -79,7 +85,7 @@ public final class NltkBaseTokenizeFunction
 
             String candidate = new String(string.getBytes(index, splitIndex - index), StandardCharsets.UTF_8);
 
-            if (!STOP_WORDS_SET.contains(candidate.toLowerCase())) {
+            if (!STOP_WORDS_SET.contains(candidate.toLowerCase()) && !STRING_PUCNTUATION_SET.contains(candidate)) {
                 // Add the part from current index to found split
                 VARCHAR.writeSlice(parts, string, index, splitIndex - index);
             }
@@ -93,7 +99,7 @@ public final class NltkBaseTokenizeFunction
         }
 
         String candidate = new String(string.getBytes(index, string.length() - index), StandardCharsets.UTF_8);
-        if (!STOP_WORDS_SET.contains(candidate)) {
+        if (!STOP_WORDS_SET.contains(candidate.toLowerCase()) && !STRING_PUCNTUATION_SET.contains(candidate)) {
             // Rest of string
             VARCHAR.writeSlice(parts, string, index, string.length() - index);
         }
