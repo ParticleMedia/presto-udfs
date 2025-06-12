@@ -15,11 +15,11 @@
  */
 package com.qubole.presto.udfs.scalar.hiveUdfs;
 
-import io.prestosql.spi.connector.ConnectorSession;
-import io.prestosql.spi.function.Description;
-import io.prestosql.spi.function.ScalarFunction;
-import io.prestosql.spi.function.SqlType;
-import io.prestosql.spi.type.StandardTypes;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.function.Description;
+import io.trino.spi.function.ScalarFunction;
+import io.trino.spi.function.SqlType;
+import io.trino.spi.type.StandardTypes;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 import io.airlift.units.DataSize;
@@ -49,7 +49,7 @@ import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeFunctions.toI
 import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeFunctions.toUnixTimeFromTimestampWithTimeZone;
 import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeFunctions.weekFromTimestamp;
 import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeFunctions.weekFromTimestampWithTimeZone;
-import static io.prestosql.spi.type.DateTimeEncoding.packDateTimeWithZone;
+import static io.trino.spi.type.DateTimeEncoding.packDateTimeWithZone;
 import static io.airlift.slice.Slices.utf8Slice;
 
 /**
@@ -134,7 +134,7 @@ public class ExtendedDateTimeFunctions
     @SqlType(StandardTypes.BIGINT)
     public static long currentUnixTimestamp(ConnectorSession session)
     {
-        return session.getStartTime() / 1000;
+        return System.currentTimeMillis() / 1000;
     }
 
     @Description("Subtract number of days to the given date")

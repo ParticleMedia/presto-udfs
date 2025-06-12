@@ -15,257 +15,111 @@
  */
 package com.qubole.presto.udfs.sqlFunction.hiveUdfs;
 
-import io.prestosql.metadata.Metadata;
-import io.prestosql.metadata.BoundVariables;
-import io.prestosql.metadata.FunctionKind;
-import io.prestosql.metadata.Signature;
-import io.prestosql.metadata.SqlScalarFunction;
-import io.prestosql.operator.scalar.ScalarFunctionImplementation;
-import io.prestosql.spi.PrestoException;
-import io.prestosql.spi.block.BlockBuilder;
-import io.prestosql.spi.block.BlockBuilderStatus;
-import io.prestosql.spi.type.StandardTypes;
-import io.prestosql.spi.type.Type;
-import io.prestosql.sql.gen.CallSiteBinder;
-import io.prestosql.type.BigintOperators;
-import io.prestosql.util.CompilerUtils;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import io.airlift.bytecode.BytecodeBlock;
-import io.airlift.bytecode.ClassDefinition;
-import io.airlift.bytecode.DynamicClassLoader;
-import io.airlift.bytecode.MethodDefinition;
-import io.airlift.bytecode.Parameter;
-import io.airlift.bytecode.Scope;
-import io.airlift.bytecode.Variable;
 import io.airlift.slice.Slice;
+import io.trino.spi.block.Block;
+import io.trino.spi.block.BlockBuilder;
+import io.trino.spi.function.Description;
+import io.trino.spi.function.ScalarFunction;
+import io.trino.spi.function.SqlType;
+import io.trino.spi.function.TypeParameter;
+import io.trino.spi.type.StandardTypes;
+import io.trino.spi.type.Type;
 
-import java.lang.invoke.MethodHandle;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
-import static io.prestosql.operator.scalar.ScalarFunctionImplementation.ArgumentProperty.valueTypeArgumentProperty;
-import static io.prestosql.operator.scalar.ScalarFunctionImplementation.NullConvention.RETURN_NULL_ON_NULL;
-import static io.prestosql.operator.scalar.ScalarFunctionImplementation.NullConvention.USE_BOXED_TYPE;
-import static io.prestosql.util.CompilerUtils.defineClass;
-import static io.prestosql.metadata.Signature.typeVariable;
-import static io.prestosql.spi.StandardErrorCode.GENERIC_INTERNAL_ERROR;
-import static io.prestosql.spi.StandardErrorCode.INVALID_FUNCTION_ARGUMENT;
-import static io.prestosql.spi.type.TypeSignature.parseTypeSignature;
-import static io.prestosql.sql.gen.SqlTypeBytecodeExpression.constantType;
-import static io.prestosql.util.Reflection.methodHandle;
-import static io.airlift.bytecode.Access.FINAL;
-import static io.airlift.bytecode.Access.PRIVATE;
-import static io.airlift.bytecode.Access.PUBLIC;
-import static io.airlift.bytecode.Access.STATIC;
-import static io.airlift.bytecode.Access.a;
-import static io.airlift.bytecode.Parameter.arg;
-import static io.airlift.bytecode.ParameterizedType.type;
-import static java.lang.String.format;
-
+@ScalarFunction("hash")
+@Description("计算任意类型变量的哈希值")
 public final class Hash
-        extends SqlScalarFunction
 {
-    public static final Hash hash = new Hash();
-    private static final String NAME = "hash";
-    public Hash()
+    private Hash() {}
+
+    @TypeParameter("E")
+    @SqlType(StandardTypes.BIGINT)
+    public static long hash(@SqlType("E") Object value, @TypeParameter("E") Type type)
     {
-        super(new Signature(
-                NAME,
-                FunctionKind.SCALAR,
-                ImmutableList.of(typeVariable("E")),
-                ImmutableList.of(),
-                parseTypeSignature("bigint"),
-                ImmutableList.of(parseTypeSignature("E")),
-                true));
+        if (value == null) {
+            return 0;
+        }
+
+        Block block;
+        if (value instanceof Block) {
+            block = (Block) value;
+        }
+        else {
+            BlockBuilder blockBuilder = type.createBlockBuilder(null, 1);
+            appendToBlock(type, value, blockBuilder);
+            block = blockBuilder.build();
+        }
+
+        if (block.getPositionCount() == 0) {
+            return 0;
+        }
+
+        return computeHash(type, block);
     }
 
-    @Override
-    public boolean isHidden()
+    private static long computeHash(Type type, Block block)
     {
-        return false;
+        long hash = 0;
+        for (int position = 0; position < block.getPositionCount(); position++) {
+            if (!block.isNull(position)) {
+                // 根据不同类型计算哈希值
+                Object element = readNativeValue(type, block, position);
+                if (element != null) {
+                    hash = 31 * hash + element.hashCode();
+                }
+            }
+        }
+        return hash;
     }
 
-    @Override
-    public boolean isDeterministic()
+    // 从Block中读取原生Java值
+    private static Object readNativeValue(Type type, Block block, int position)
     {
-        return true;
-    }
-
-    @Override
-    public String getDescription()
-    {
-        return "get the hash value for variable no. of arguments of any type";
-    }
-
-    public static void checkNotNaN(double value)
-    {
-        if (Double.isNaN(value)) {
-            throw new PrestoException(INVALID_FUNCTION_ARGUMENT, "Invalid argument to hash(): NaN");
+        Class<?> javaType = type.getJavaType();
+        if (javaType == long.class) {
+            return type.getLong(block, position);
+        }
+        else if (javaType == double.class) {
+            double value = type.getDouble(block, position);
+            if (Double.isNaN(value)) {
+                throw new IllegalArgumentException("Invalid argument to hash(): NaN");
+            }
+            return value;
+        }
+        else if (javaType == boolean.class) {
+            return type.getBoolean(block, position);
+        }
+        else if (javaType == Slice.class) {
+            return type.getSlice(block, position);
+        }
+        else {
+            return type.getObject(block, position);
         }
     }
 
-    @Override
-    public ScalarFunctionImplementation specialize(BoundVariables types, int arity, Metadata metadata)
+    private static void appendToBlock(Type type, Object value, BlockBuilder blockBuilder)
     {
-        Type type = types.getTypeVariable("E");
+        Class<?> javaType = type.getJavaType();
 
-        // the argument need not be orderable, so no orderable check
-        ImmutableList.Builder<Class<?>> builder = ImmutableList.builder();
-        for (int i = 0; i < arity; i++) {
-            builder.add(type.getJavaType());
+        if (javaType == long.class) {
+            type.writeLong(blockBuilder, (Long) value);
         }
-
-        ImmutableList<Class<?>> stackTypes = builder.build();
-        Class<?> clazz = generateHash(stackTypes, type);
-        MethodHandle methodHandle = methodHandle(clazz, "hash", stackTypes.toArray(new Class<?>[0]));
-        List<Boolean> nullableParameters = ImmutableList.copyOf(Collections.nCopies(stackTypes.size(), false));
-
-        List<ScalarFunctionImplementation.ArgumentProperty> argumentProperties = nullableParameters.stream()
-                .map(nullable -> nullable
-                        ? valueTypeArgumentProperty(USE_BOXED_TYPE)
-                        : valueTypeArgumentProperty(RETURN_NULL_ON_NULL))
-                .collect(Collectors.toList());
-        return new ScalarFunctionImplementation(false, argumentProperties, methodHandle, isDeterministic());
-    }
-
-    public static Class<?> generateHash(List<Class<?>> nativeContainerTypes, Type type)
-    {
-        List<String> nativeContainerTypeNames = ImmutableList.copyOf(nativeContainerTypes.stream()
-            .map(Class::getSimpleName)
-            .collect(Collectors.toList()));
-        ClassDefinition definition = new ClassDefinition(
-                a(PUBLIC, FINAL),
-                CompilerUtils.makeClassName(Joiner.on("").join(nativeContainerTypeNames) + "Hash"),
-                type(Object.class));
-
-        definition.declareDefaultConstructor(a(PRIVATE));
-
-        ImmutableList.Builder<Parameter> parameters = ImmutableList.builder();
-        for (int i = 0; i < nativeContainerTypes.size(); i++) {
-            Class<?> nativeContainerType = nativeContainerTypes.get(i);
-            parameters.add(arg("arg" + i, nativeContainerType));
+        else if (javaType == double.class) {
+            if (Double.isNaN((Double) value)) {
+                throw new IllegalArgumentException("Invalid argument to hash(): NaN");
+            }
+            type.writeDouble(blockBuilder, (Double) value);
         }
-
-        MethodDefinition method = definition.declareMethod(a(PUBLIC, STATIC), "hash", type(long.class), parameters.build());
-        Scope scope = method.getScope();
-        BytecodeBlock body = method.getBody();
-
-        Variable typeVariable = scope.declareVariable(Type.class, "typeVariable");
-        CallSiteBinder binder = new CallSiteBinder();
-
-        body.comment("typeVariable = type;")
-                .append(constantType(binder, type))
-                .putVariable(typeVariable);
-
-        for (int i = 0; i < nativeContainerTypes.size(); i++) {
-            Class<?> nativeContainerType = nativeContainerTypes.get(i);
-            Variable currentBlock = scope.declareVariable(io.prestosql.spi.block.Block.class, "block" + i);
-            Variable blockBuilder = scope.declareVariable(BlockBuilder.class, "blockBuilder" + i);
-            BytecodeBlock buildBlock = new BytecodeBlock()
-                    .comment("blockBuilder%d = typeVariable.createBlockBuilder(new BlockBuilderStatus(),1, 32);", i)
-                    .getVariable(typeVariable)
-                    .newObject(BlockBuilderStatus.class)
-                    .dup()
-                    .invokeConstructor(BlockBuilderStatus.class)
-                    .push(1)
-                    .push(32)
-                    .invokeInterface(Type.class, "createBlockBuilder", BlockBuilder.class, BlockBuilderStatus.class, int.class, int.class)
-                    .putVariable(blockBuilder);
-
-            String writeMethodName;
-            if (nativeContainerType == long.class) {
-                writeMethodName = "writeLong";
-            }
-            else if (nativeContainerType == boolean.class) {
-                writeMethodName = "writeBoolean";
-            }
-            else if (nativeContainerType == double.class) {
-                writeMethodName = "writeDouble";
-            }
-            else if (nativeContainerType == Slice.class) {
-                writeMethodName = "writeSlice";
-            }
-            else {
-                throw new PrestoException(GENERIC_INTERNAL_ERROR, format("Unexpected type %s", nativeContainerType.getName()));
-            }
-
-            if (type.getTypeSignature().getBase().equals(StandardTypes.DOUBLE)) {
-                buildBlock.comment("arg0 != NaN")
-                        .append(scope.getVariable("arg" + i))
-                        .invokeStatic(Hash.class, "checkNotNaN", void.class, double.class);
-            }
-
-            BytecodeBlock writeBlock = new BytecodeBlock()
-                    .comment("typeVariable.%s(blockBuilder%d, arg%d);", writeMethodName, i, i)
-                    .getVariable(typeVariable)
-                    .getVariable(blockBuilder)
-                    .append(scope.getVariable("arg" + i))
-                    .invokeInterface(Type.class, writeMethodName, void.class, BlockBuilder.class, nativeContainerType);
-
-            buildBlock.append(writeBlock);
-
-            BytecodeBlock storeBlock = new BytecodeBlock()
-                    .comment("block%d = blockBuilder%d.build();", i, i)
-                    .getVariable(blockBuilder)
-                    .invokeInterface(BlockBuilder.class, "build", io.prestosql.spi.block.Block.class)
-                    .putVariable(currentBlock);
-            buildBlock.append(storeBlock);
-            body.append(buildBlock);
+        else if (javaType == boolean.class) {
+            type.writeBoolean(blockBuilder, (Boolean) value);
         }
-        Variable rangeVariable = scope.declareVariable(long.class, "range");
-        body.comment("range = Integer.MAX_VALUE")
-                .push(Integer.MAX_VALUE)
-                .intToLong()
-                .putVariable(rangeVariable);
-
-        Variable hashValueVariable = scope.declareVariable(long.class, "hashValue");
-        body.comment("hashValue = 0")
-                .push(0)
-                .intToLong()
-                .putVariable(hashValueVariable);
-
-        Variable currenHashValueVariable = scope.declareVariable(long.class, "currentHashValue");
-        Variable currentBlockLengthVariable = scope.declareVariable(int.class, "currentLength");
-        for (int i = 0; i < nativeContainerTypes.size(); i++) {
-            BytecodeBlock currentBlockLength = new BytecodeBlock()
-                    .append(scope.getVariable("block" + i))
-                    .push(0)
-                    .invokeInterface(io.prestosql.spi.block.Block.class, "getLength", int.class, int.class)
-                    .putVariable(currentBlockLengthVariable);
-
-            BytecodeBlock currentHashValueBlock = new BytecodeBlock()
-                    .append(scope.getVariable("block" + i))
-                    .push(0)
-                    .push(0)
-                    .getVariable(currentBlockLengthVariable)
-                    .invokeInterface(io.prestosql.spi.block.Block.class, "hash", int.class, int.class, int.class, int.class)
-                    .intToLong()
-                    .append(scope.getVariable("range"))
-                    .invokeStatic(BigintOperators.class, "modulus", long.class, long.class, long.class)
-                    .putVariable(currenHashValueVariable);
-
-            BytecodeBlock updateHashValueBlock = new BytecodeBlock()
-                    .getVariable(currenHashValueVariable)
-                    .getVariable(hashValueVariable)
-                    .invokeStatic(BigintOperators.class, "add", long.class, long.class, long.class)
-                    .append(scope.getVariable("range"))
-                    .invokeStatic(BigintOperators.class, "modulus", long.class, long.class, long.class)
-                    .putVariable(hashValueVariable);
-
-            body.append(currentBlockLength)
-                    .append(currentHashValueBlock)
-                    .append(updateHashValueBlock);
+        else if (javaType == Slice.class) {
+            type.writeSlice(blockBuilder, (Slice) value);
         }
-        body.comment("return hashValue")
-                .getVariable(hashValueVariable)
-                .append(scope.getVariable("range"))
-                .invokeStatic(BigintOperators.class, "add", long.class, long.class, long.class)
-                .append(scope.getVariable("range"))
-                .invokeStatic(BigintOperators.class, "modulus", long.class, long.class, long.class)
-                .ret(long.class);
-
-        return defineClass(definition, Object.class, binder.getBindings(), new DynamicClassLoader(Hash.class.getClassLoader()));
+        else {
+            type.writeObject(blockBuilder, value);
+        }
     }
 }

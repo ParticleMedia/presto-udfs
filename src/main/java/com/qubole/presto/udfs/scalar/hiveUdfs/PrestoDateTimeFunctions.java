@@ -29,8 +29,8 @@
  */
 package com.qubole.presto.udfs.scalar.hiveUdfs;
 
-import io.prestosql.spi.connector.ConnectorSession;
-import io.prestosql.spi.PrestoException;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.TrinoException;
 import com.google.common.primitives.Ints;
 import io.airlift.slice.Slice;
 import org.joda.time.Chronology;
@@ -48,8 +48,8 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.Locale;
 
-import static io.prestosql.spi.StandardErrorCode.INVALID_FUNCTION_ARGUMENT;
-import static io.prestosql.spi.type.DateTimeEncoding.unpackMillisUtc;
+import static io.trino.spi.StandardErrorCode.INVALID_FUNCTION_ARGUMENT;
+import static io.trino.spi.type.DateTimeEncoding.unpackMillisUtc;
 import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeZoneIndex.extractZoneOffsetMinutes;
 import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeZoneIndex.getChronology;
 import static com.qubole.presto.udfs.scalar.hiveUdfs.PrestoDateTimeZoneIndex.unpackChronology;
@@ -126,7 +126,8 @@ public final class PrestoDateTimeFunctions
             case "year":
                 return chronology.year();
         }
-        throw new PrestoException(INVALID_FUNCTION_ARGUMENT, "'" + unitString + "' is not a valid DATE field");
+    throw new TrinoException(
+        INVALID_FUNCTION_ARGUMENT, "'" + unitString + "' is not a valid DATE field");
     }
 
     private static DateTimeField getTimestampField(ISOChronology chronology, Slice unit)
@@ -152,7 +153,8 @@ public final class PrestoDateTimeFunctions
             case "year":
                 return chronology.year();
         }
-        throw new PrestoException(INVALID_FUNCTION_ARGUMENT, "'" + unitString + "' is not a valid Timestamp field");
+    throw new TrinoException(
+        INVALID_FUNCTION_ARGUMENT, "'" + unitString + "' is not a valid Timestamp field");
     }
 
     public static Slice formatDatetime(ConnectorSession session, long timestamp, Slice formatString)
@@ -169,7 +171,7 @@ public final class PrestoDateTimeFunctions
                     .print(timestamp));
         }
         catch (IllegalArgumentException e) {
-            throw new PrestoException(INVALID_FUNCTION_ARGUMENT, e);
+            throw new TrinoException(INVALID_FUNCTION_ARGUMENT, e);
         }
     }
 

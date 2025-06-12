@@ -1,15 +1,15 @@
 package com.facebook.presto.udfs.scala.hiveUdfs;
 
 import io.airlift.slice.Slice;
-import com.facebook.presto.common.block.Block;
-import com.facebook.presto.common.block.BlockBuilder;
-import com.facebook.presto.common.type.StandardTypes;
-import com.facebook.presto.spi.function.Description;
-import com.facebook.presto.spi.function.ScalarFunction;
-import com.facebook.presto.spi.function.SqlType;
+import io.trino.spi.block.Block;
+import io.trino.spi.block.BlockBuilder;
+import io.trino.spi.type.StandardTypes;
+import io.trino.spi.function.Description;
+import io.trino.spi.function.ScalarFunction;
+import io.trino.spi.function.SqlType;
 import io.airlift.slice.Slices;
 
-import static com.facebook.presto.common.type.VarcharType.VARCHAR;
+import static io.trino.spi.type.VarcharType.VARCHAR;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

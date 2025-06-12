@@ -22,81 +22,38 @@
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     -->
         <presto.version>317</presto.version>
-        <slice.version>0.36</slice.version>
+        <trino.version>476</trino.version>
+        <slice.version>2.3</slice.version>
         <guava.version>26.0-jre</guava.version>
         <javax.inject.version>1</javax.inject.version>
-        <io.airlift.log.version>0.183</io.airlift.log.version>
+        <io.airlift.log.version>338</io.airlift.log.version>
         <jodatime.version>2.8.1</jodatime.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>24</maven.compiler.source>
+        <maven.compiler.target>24</maven.compiler.target>
     </properties>
 
     <build>
-       <plugins> 
-<!--        <plugin>-->
-<!--            <groupId>org.apache.maven.plugins</groupId>-->
-<!--            <artifactId>maven-checkstyle-plugin</artifactId>-->
-<!--            <version>2.17</version>-->
-<!--            <executions>-->
-<!--                <execution>-->
-<!--                    <id>validate</id>-->
-<!--                    <phase>validate</phase>-->
-<!--                    <configuration>-->
-<!--                       <configLocation>src/checkstyle/checks.xml</configLocation>-->
-<!--                        <encoding>UTF-8</encoding>-->
-<!--                        <consoleOutput>true</consoleOutput>-->
-<!--                        <failsOnError>true</failsOnError>-->
-<!--                    </configuration>-->
-<!--                <goals>-->
-<!--                    <goal>check</goal>-->
-<!--                </goals>-->
-<!--                </execution>-->
-<!--            </executions>-->
-<!--        </plugin>-->
+       <plugins>
+           <plugin>
+               <groupId>io.trino</groupId>
+               <artifactId>trino-maven-plugin</artifactId>
+               <version>15</version>
+               <extensions>true</extensions>
+           </plugin>
            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-release-plugin</artifactId>
-               <version>2.5.1</version>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>3.14.0</version>
+               <configuration>
+                   <source>24</source>
+                   <target>24</target>
+               </configuration>
            </plugin>
 
            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-shade-plugin</artifactId>
-               <version>2.3</version>
-               <executions>
-                   <execution>
-                       <phase>package</phase>
-                       <goals>
-                           <goal>shade</goal>
-                       </goals>
-                       <configuration>
-                           <artifactSet>
-                               <!-- dont need to add airlift.slice, presto provides it to all plugins -->
-                               <includes>
-                                   <include>com.google.guava:guava</include>
-                                   <include>io.airlift:log</include>
-                                   <include>joda-time:joda-time</include>
-                                   <include>io.prestosql:presto-spi</include>
-                               </includes>
-                           </artifactSet>
-                           <relocations>
-                               <relocation>
-                                   <pattern>org.joda</pattern>
-                                   <shadedPattern>org.joda.shaded</shadedPattern>
-                               </relocation>
-                               <relocation>
-                                   <pattern>com.google</pattern>
-                                   <shadedPattern>com.google.shaded</shadedPattern>
-                               </relocation>
-                               <relocation>
-                                   <pattern>io.airlift.log</pattern>
-                                   <shadedPattern>io.airlift.log.shaded</shadedPattern>
-                               </relocation>
-                           </relocations>
-
-                       </configuration>
-                   </execution>
-               </executions>
+               <artifactId>maven-release-plugin</artifactId>
+               <version>3.1.1</version>
            </plugin>
       </plugins>
     </build>
@@ -107,6 +64,7 @@
     <name>PrestoUDFs</name>
     <url>https://github.com/qubole/presto-udfs</url>
     <description>Common Functions for the Facebook Presto SQL Engine</description>
+    <packaging>trino-plugin</packaging>
 
     <scm>
         <url>https://github.com/qubole/presto-udfs</url>
@@ -135,37 +93,26 @@
     </developers>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.facebook.presto/presto-spi -->
+        <!-- https://mvnrepository.com/artifact/io.trino/trino-spi -->
         <dependency>
-            <groupId>com.facebook.presto</groupId>
-            <artifactId>presto-spi</artifactId>
-            <version>0.282</version>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-spi</artifactId>
+            <version>${trino.version}</version>
             <scope>provided</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/io.trino/trino-main -->
         <dependency>
-            <groupId>com.facebook.presto</groupId>
-            <artifactId>presto-common</artifactId>
-            <version>0.282</version>
-<!--            <scope>provided</scope>-->
-        </dependency>
-
-        <dependency>
-            <groupId>io.prestosql</groupId>
-            <artifactId>presto-spi</artifactId>
-            <version>${presto.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.prestosql</groupId>
-            <artifactId>presto-main</artifactId>
-            <version>${presto.version}</version>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-main</artifactId>
+            <version>${trino.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.airlift</groupId>
             <artifactId>slice</artifactId>
             <version>${slice.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -192,18 +139,37 @@
             <version>${jodatime.version}</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-engine</artifactId>-->
-<!--            <version>5.2.0</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.junit.platform</groupId>-->
-<!--            <artifactId>junit-platform-runner</artifactId>-->
-<!--            <version>1.2.0</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.14.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+            <version>1.51.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-context -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-context</artifactId>
+            <version>1.51.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.openjdk.jol/jol-core -->
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>0.17</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

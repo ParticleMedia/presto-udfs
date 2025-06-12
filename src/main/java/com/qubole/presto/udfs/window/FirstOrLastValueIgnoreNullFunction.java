@@ -15,9 +15,9 @@
  */
 package com.qubole.presto.udfs.window;
 
-import io.prestosql.spi.block.BlockBuilder;
-import io.prestosql.spi.function.ValueWindowFunction;
-import io.prestosql.spi.type.Type;
+import io.trino.spi.block.BlockBuilder;
+import io.trino.spi.function.ValueWindowFunction;
+import io.trino.spi.type.Type;
 
 import java.util.List;
 

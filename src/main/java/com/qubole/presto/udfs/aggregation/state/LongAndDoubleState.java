@@ -15,7 +15,7 @@
  */
 package com.qubole.presto.udfs.aggregation.state;
 
-import io.prestosql.spi.function.AccumulatorState;
+import io.trino.spi.function.AccumulatorState;
 
 public interface LongAndDoubleState
         extends AccumulatorState

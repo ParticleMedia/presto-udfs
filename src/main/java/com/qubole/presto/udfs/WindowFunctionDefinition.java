@@ -15,7 +15,7 @@
  */
 package com.qubole.presto.udfs;
 
-import io.prestosql.spi.type.Type;
+import io.trino.spi.type.Type;
 
 import java.util.List;
 

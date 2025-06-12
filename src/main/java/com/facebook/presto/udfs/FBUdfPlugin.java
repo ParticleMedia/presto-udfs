@@ -3,7 +3,7 @@ package com.facebook.presto.udfs;
 
 import com.google.common.collect.ImmutableSet;
 import com.facebook.presto.udfs.scala.hiveUdfs.NltkBaseTokenizeFunction;
-import com.facebook.presto.spi.Plugin;
+import io.trino.spi.Plugin;
 
 import java.util.Set;
 
