@@ -106,6 +106,7 @@
             <groupId>io.trino</groupId>
             <artifactId>trino-main</artifactId>
             <version>${trino.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -131,6 +132,13 @@
             <groupId>io.airlift</groupId>
             <artifactId>log</artifactId>
             <version>${io.airlift.log.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.airlift/units -->
+        <dependency>
+            <groupId>io.airlift</groupId>
+            <artifactId>units</artifactId>
+            <version>1.10</version>
         </dependency>
 
         <dependency>

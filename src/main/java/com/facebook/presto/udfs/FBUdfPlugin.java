@@ -3,6 +3,11 @@ package com.facebook.presto.udfs;
 
 import com.google.common.collect.ImmutableSet;
 import com.facebook.presto.udfs.scala.hiveUdfs.NltkBaseTokenizeFunction;
+import com.qubole.presto.udfs.scalar.hiveUdfs.ExtendedDateTimeFunctions;
+import com.qubole.presto.udfs.scalar.hiveUdfs.ExtendedMathematicFunctions;
+import com.qubole.presto.udfs.scalar.hiveUdfs.ExtendedStringFunctions;
+import com.qubole.presto.udfs.window.FirstNonNullValueFunction;
+import com.qubole.presto.udfs.window.LastNonNullValueFunction;
 import io.trino.spi.Plugin;
 
 import java.util.Set;
@@ -25,6 +30,11 @@ public class FBUdfPlugin implements Plugin
          */
         return ImmutableSet.<Class<?>>builder()
                 .add(NltkBaseTokenizeFunction.class)
+                .add(ExtendedDateTimeFunctions.class)
+                .add(ExtendedMathematicFunctions.class)
+                .add(ExtendedStringFunctions.class)
+                .add(FirstNonNullValueFunction.class)
+                .add(LastNonNullValueFunction.class)
                 .build();
     }
 }
