@@ -12,28 +12,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fix file permissions
+        run: |
+          chmod -R 777 .
+          chown -R 1000:1000 .
+          echo "Checking file permissions after fix:"
+          ls -la .
+
       - name: Build with Maven
         run: |
           mvn package
           cd target
-          tar -czf udfs-3.0.1-SNAPSHOT.tar.gz udfs-3.0.1-SNAPSHOT/*
-          tar -cf udfs-3.0.1-SNAPSHOT.tar udfs-3.0.1-SNAPSHOT/*
+          tar -czf udfs-3.0.1-SNAPSHOT.tar.gz udfs-3.0.1-SNAPSHOT/
+          tar -cf udfs-3.0.1-SNAPSHOT.tar udfs-3.0.1-SNAPSHOT/
 
-      - name: Upload JAR artifact
+      - name: Upload ZIP artifact
+        id: upload-zip
         uses: actions/upload-artifact@v4
         with:
-          name: udfs-3.0.1-SNAPSHOT-jar
-          path: target/udfs-3.0.1-SNAPSHOT.jar
+          name: udfs-3.0.1-SNAPSHOT-zip
+          path: target/udfs-3.0.1-SNAPSHOT.zip
 
       - name: Upload TAR.GZ artifact
+        id: upload-tar-gz
         uses: actions/upload-artifact@v4
         with:
           name: udfs-3.0.1-SNAPSHOT-tar-gz
           path: target/udfs-3.0.1-SNAPSHOT.tar.gz
 
       - name: Upload TAR artifact
+        id: upload-tar
         uses: actions/upload-artifact@v4
         with:
           name: udfs-3.0.1-SNAPSHOT-tar
           path: target/udfs-3.0.1-SNAPSHOT.tar
 
+      - name: Output all artifact IDs and run ID to summary
+        run: |
+          echo "Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "ZIP Artifact ID is ${{ steps.upload-zip.outputs.artifact-id }}" >> $GITHUB_STEP_SUMMARY
+          echo "TAR.GZ Artifact ID is ${{ steps.upload-tar-gz.outputs.artifact-id }}" >> $GITHUB_STEP_SUMMARY
+          echo "TAR Artifact ID is ${{ steps.upload-tar.outputs.artifact-id }}" >> $GITHUB_STEP_SUMMARY
