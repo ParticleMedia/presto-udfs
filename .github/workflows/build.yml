@@ -3,30 +3,34 @@ name: Build Presto UDFs
 on:
   workflow_dispatch:
     inputs:
-      jdk_version:
-        description: 'JDK version to use for build'
+      maven_image:
+        description: 'Maven + JDK Docker image to use for build'
         required: true
-        default: '24'
+        default: '3.9-eclipse-temurin-24'
         type: choice
         options:
-          - '21'
-          - '24'
-          - '25'
+          - '3.9-eclipse-temurin-21'
+          - '3.9-eclipse-temurin-22'
+          - '3.9-eclipse-temurin-23'
+          - '3.9-eclipse-temurin-24'
+          - '3.9-eclipse-temurin-25'
 
 jobs:
   build:
     runs-on: checks
     container:
-      image: public.ecr.aws/docker/library/maven:3.9.12-eclipse-temurin-${{ inputs.jdk_version }}
+      image: public.ecr.aws/docker/library/maven:${{ inputs.maven_image }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Display Build Configuration
         run: |
+          JDK_VERSION=$(echo "${{ inputs.maven_image }}" | grep -oP '\d+$')
           echo "## Build Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "- **JDK Version:** ${{ inputs.jdk_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Maven Version:** 3.9.12" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Image:** maven:${{ inputs.maven_image }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **JDK Version:** ${JDK_VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Maven Version:** 3.9" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
@@ -41,8 +45,9 @@ jobs:
 
       - name: Build with Maven
         run: |
-          echo "Building with JDK ${{ inputs.jdk_version }}..."
-          mvn package -Dmaven.compiler.source=${{ inputs.jdk_version }} -Dmaven.compiler.target=${{ inputs.jdk_version }}
+          JDK_VERSION=$(echo "${{ inputs.maven_image }}" | grep -oP '\d+$')
+          echo "Building with Maven image: ${{ inputs.maven_image }} (JDK ${JDK_VERSION})..."
+          mvn package -Dmaven.compiler.source=${JDK_VERSION} -Dmaven.compiler.target=${JDK_VERSION}
           cd target
           tar -czf udfs-3.0.1-SNAPSHOT.tar.gz udfs-3.0.1-SNAPSHOT/
           tar -cf udfs-3.0.1-SNAPSHOT.tar udfs-3.0.1-SNAPSHOT/
@@ -70,6 +75,7 @@ jobs:
 
       - name: Output all artifact IDs and run ID to summary
         run: |
+          JDK_VERSION=$(echo "${{ inputs.maven_image }}" | grep -oP '\d+$')
           echo "## Build Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
@@ -79,4 +85,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Build completed successfully with JDK ${{ inputs.jdk_version }}**" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build completed successfully with Maven ${{ inputs.maven_image }} (JDK ${JDK_VERSION})**" >> $GITHUB_STEP_SUMMARY
