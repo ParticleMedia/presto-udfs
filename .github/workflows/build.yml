@@ -2,15 +2,35 @@ name: Build Presto UDFs
 
 on:
   workflow_dispatch:
+    inputs:
+      jdk_version:
+        description: 'JDK version to use for build'
+        required: true
+        default: '24'
+        type: choice
+        options:
+          - '21'
+          - '24'
+          - '25'
 
 jobs:
   build:
     runs-on: checks
     container:
-      image: public.ecr.aws/docker/library/maven:3.9.12-eclipse-temurin-25
+      image: public.ecr.aws/docker/library/maven:3.9.12-eclipse-temurin-${{ inputs.jdk_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Display Build Configuration
+        run: |
+          echo "## Build Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **JDK Version:** ${{ inputs.jdk_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Maven Version:** 3.9.12" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Fix file permissions
         run: |
@@ -21,7 +41,8 @@ jobs:
 
       - name: Build with Maven
         run: |
-          mvn package
+          echo "Building with JDK ${{ inputs.jdk_version }}..."
+          mvn package -Dmaven.compiler.source=${{ inputs.jdk_version }} -Dmaven.compiler.target=${{ inputs.jdk_version }}
           cd target
           tar -czf udfs-3.0.1-SNAPSHOT.tar.gz udfs-3.0.1-SNAPSHOT/
           tar -cf udfs-3.0.1-SNAPSHOT.tar udfs-3.0.1-SNAPSHOT/
@@ -49,7 +70,13 @@ jobs:
 
       - name: Output all artifact IDs and run ID to summary
         run: |
+          echo "## Build Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
           echo "ZIP Artifact ID is ${{ steps.upload-zip.outputs.artifact-id }}" >> $GITHUB_STEP_SUMMARY
           echo "TAR.GZ Artifact ID is ${{ steps.upload-tar-gz.outputs.artifact-id }}" >> $GITHUB_STEP_SUMMARY
           echo "TAR Artifact ID is ${{ steps.upload-tar.outputs.artifact-id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build completed successfully with JDK ${{ inputs.jdk_version }}**" >> $GITHUB_STEP_SUMMARY
