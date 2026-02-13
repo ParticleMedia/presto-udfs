@@ -22,14 +22,14 @@
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     -->
         <presto.version>317</presto.version>
-        <trino.version>479</trino.version>
+        <trino.version>477</trino.version>
         <slice.version>2.3</slice.version>
         <guava.version>26.0-jre</guava.version>
         <javax.inject.version>1</javax.inject.version>
         <io.airlift.log.version>338</io.airlift.log.version>
         <jodatime.version>2.8.1</jodatime.version>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.source>24</maven.compiler.source>
+        <maven.compiler.target>24</maven.compiler.target>
     </properties>
 
     <build>
@@ -45,8 +45,8 @@
                <artifactId>maven-compiler-plugin</artifactId>
                <version>3.14.0</version>
                <configuration>
-                   <source>25</source>
-                   <target>25</target>
+                   <source>24</source>
+                   <target>24</target>
                </configuration>
            </plugin>
 

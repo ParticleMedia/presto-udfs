@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: checks
     container:
-      image: public.ecr.aws/docker/library/maven:3.9.12-eclipse-temurin-25
+      image: public.ecr.aws/docker/library/maven:3.9-eclipse-temurin-24
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,12 +19,24 @@ jobs:
           echo "Checking file permissions after fix:"
           ls -la .
 
+      - name: Verify Java Version
+        run: |
+          echo "Java version being used:"
+          java -version
+          javac -version
+          echo "JAVA_HOME: $JAVA_HOME"
+
       - name: Build with Maven
         run: |
           mvn package
           cd target
           tar -czf udfs-3.0.1-SNAPSHOT.tar.gz udfs-3.0.1-SNAPSHOT/
           tar -cf udfs-3.0.1-SNAPSHOT.tar udfs-3.0.1-SNAPSHOT/
+
+      - name: Verify Compiled Class Version
+        run: |
+          echo "Checking compiled class file version..."
+          javap -verbose target/classes/com/facebook/presto/udfs/FBUdfPlugin.class | grep "major version" || echo "Class file check completed"
 
       - name: Upload ZIP artifact
         id: upload-zip
