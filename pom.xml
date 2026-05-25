@@ -22,8 +22,8 @@
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
     -->
         <presto.version>317</presto.version>
-        <trino.version>479</trino.version>
-        <slice.version>2.3</slice.version>
+        <trino.version>481</trino.version>
+        <slice.version>2.7</slice.version>
         <guava.version>26.0-jre</guava.version>
         <javax.inject.version>1</javax.inject.version>
         <io.airlift.log.version>338</io.airlift.log.version>
@@ -167,14 +167,6 @@
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-context</artifactId>
             <version>1.51.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.openjdk.jol/jol-core -->
-        <dependency>
-            <groupId>org.openjdk.jol</groupId>
-            <artifactId>jol-core</artifactId>
-            <version>0.17</version>
             <scope>provided</scope>
         </dependency>
 
